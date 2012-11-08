@@ -3,7 +3,7 @@ package uk.me.mjt.log4jjson;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import org.apache.log4j.Layout;
 import org.apache.log4j.spi.LoggingEvent;
@@ -20,7 +20,7 @@ public class SimpleJsonLayout extends Layout {
 
     @Override
     public String format(LoggingEvent le) {
-        HashMap<String,Object> r = new HashMap();
+        Map<String,Object> r = new LinkedHashMap();
         r.put("timestamp", le.timeStamp);
         r.put("date", new Date(le.timeStamp));
         r.put("hostname", hostname);
@@ -65,7 +65,7 @@ public class SimpleJsonLayout extends Layout {
         StringBuilder sb = new StringBuilder();
         for (int i=0 ; ; i++) {
             sb.append(parts[i]);
-            if (i==parts.length)
+            if (i==parts.length-1)
                 return sb.toString();
             sb.append("\n");
         }
