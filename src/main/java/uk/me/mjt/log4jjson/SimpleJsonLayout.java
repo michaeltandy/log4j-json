@@ -32,7 +32,7 @@ public class SimpleJsonLayout extends Layout {
         r.put("filename", le.getLocationInformation().getFileName());
         r.put("linenumber", Integer.parseInt(le.getLocationInformation().getLineNumber()));
         r.put("methodname", le.getLocationInformation().getMethodName());
-        r.put("message", le.getMessage());
+        r.put("message", safeToString(le.getMessage()));
         r.put("throwable", formatThrowable(le) );
         
         after(le,r);
@@ -47,6 +47,21 @@ public class SimpleJsonLayout extends Layout {
      */
     public void after(LoggingEvent le, Map<String,Object> r) {
         
+    }
+    
+    /**
+     * LoggingEvent messages can have any type, and we call toString on them. As
+     * the user can define the toString method, we should catch any exceptions.
+     * @param obj
+     * @return 
+     */
+    private static String safeToString(Object obj) {
+        if (obj==null) return null;
+        try {
+            return obj.toString();
+        } catch (Throwable t) {
+            return "Error getting message: "+ t.getMessage();
+        }
     }
     
     /**
@@ -67,7 +82,7 @@ public class SimpleJsonLayout extends Layout {
             sb.append(parts[i]);
             if (i==parts.length-1)
                 return sb.toString();
-            sb.append("\n");
+            sb.append(separator);
         }
     }
     
