@@ -9,7 +9,7 @@
 
     <groupId>uk.me.mjt</groupId>
     <artifactId>log4j-json</artifactId>
-    <version>1.0</version>
+    <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>log4j-json</name>
