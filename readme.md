@@ -22,6 +22,24 @@ log4j.appender.a=org.apache.log4j.ConsoleAppender
 log4j.appender.a.layout=uk.me.mjt.log4jjson.SimpleJsonLayout
 ```
 
+Some log details are [slower to gather than others](https://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/PatternLayout.html).
+If you want to disable logging slow details,
+or just log them for events above a certain severity,
+you can set a minimum level like this:
+```
+log4j.appender.a.layout.MinimumLevelForSlowLogging=WARN
+```
+
+You can log MDC properties by listing the keys you want to log for, 
+comma separated, like so:
+```
+log4j.appender.a.layout.MdcFieldsToLog=asdf,zxcv
+```
+If your MDC fields have the same names as existing fields, 
+or have commas in their names,
+or have names starting or ending with whitespace,
+that's unsupported sorry.
+
 ## I want to upload to Google BigQuery, what schema should I use?
 
 Here's the one I used:

@@ -2,9 +2,13 @@ package uk.me.mjt.log4jjson;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import org.apache.log4j.Level;
 import org.apache.log4j.Layout;
 import org.apache.log4j.spi.LoggingEvent;
 
@@ -17,6 +21,9 @@ public class SimpleJsonLayout extends Layout {
     private final Gson gson = new GsonBuilder().create();
     private final String hostname = getHostname().toLowerCase();
     private final String username = System.getProperty("user.name").toLowerCase();
+    
+    private Level minimumLevelForSlowLogging = Level.ALL;
+    private List<String> mdcFieldsToLog = Collections.EMPTY_LIST;
 
     @Override
     public String format(LoggingEvent le) {
@@ -28,12 +35,20 @@ public class SimpleJsonLayout extends Layout {
         r.put("level", le.getLevel().toString());
         r.put("thread", le.getThreadName());
         r.put("ndc",le.getNDC());
-        r.put("classname", le.getLocationInformation().getClassName());
-        r.put("filename", le.getLocationInformation().getFileName());
-        r.put("linenumber", Integer.parseInt(le.getLocationInformation().getLineNumber()));
-        r.put("methodname", le.getLocationInformation().getMethodName());
+        if (le.getLevel().isGreaterOrEqual(minimumLevelForSlowLogging)) {
+            r.put("classname", le.getLocationInformation().getClassName());
+            r.put("filename", le.getLocationInformation().getFileName());
+            r.put("linenumber", safeParseInt(le.getLocationInformation().getLineNumber()));
+            r.put("methodname", le.getLocationInformation().getMethodName());
+        }
         r.put("message", safeToString(le.getMessage()));
         r.put("throwable", formatThrowable(le) );
+        
+        for (String mdcKey : mdcFieldsToLog) {
+            if (!r.containsKey(mdcKey)) {
+                r.put(mdcKey, safeToString(le.getMDC(mdcKey)));
+            }
+        }
         
         after(le,r);
         return gson.toJson(r)+"\n";
@@ -61,6 +76,20 @@ public class SimpleJsonLayout extends Layout {
             return obj.toString();
         } catch (Throwable t) {
             return "Error getting message: "+ t.getMessage();
+        }
+    }
+    
+    /**
+     * Safe integer parser, for when line numbers aren't available. See for
+     * example https://github.com/michaeltandy/log4j-json/issues/1
+     * @param obj
+     * @return 
+     */
+    private static Integer safeParseInt(String obj) {
+        try {
+            return Integer.parseInt(obj.toString());
+        } catch (NumberFormatException t) {
+            return null;
         }
     }
     
@@ -104,6 +133,29 @@ public class SimpleJsonLayout extends Layout {
             hostname = "Unknown, "+e.getMessage();
         }
         return hostname;
+    }
+    
+    public void setMinimumLevelForSlowLogging(String level) {
+        minimumLevelForSlowLogging = Level.toLevel(level, Level.ALL);
+    }
+    
+    /*public String getMinimumLevelForSlowLogging() {
+        return minimumLevelForSlowLogging.toString();
+    }*/
+    
+    public void setMdcFieldsToLog(String toLog) {
+        if (toLog == null || toLog.isEmpty()) {
+            mdcFieldsToLog = Collections.EMPTY_LIST;
+        } else {
+            ArrayList<String> listToLog = new ArrayList();
+            for (String token : toLog.split(",")) {
+                token = token.trim();
+                if (!token.isEmpty()) {
+                    listToLog.add(token);
+                }
+            }
+            mdcFieldsToLog = Collections.unmodifiableList(listToLog);
+        }
     }
     
 }
