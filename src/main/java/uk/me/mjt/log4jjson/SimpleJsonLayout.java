@@ -11,6 +11,7 @@ import java.util.Map;
 import org.apache.log4j.Level;
 import org.apache.log4j.Layout;
 import org.apache.log4j.spi.LoggingEvent;
+import org.apache.log4j.MDC;
 
 /**
  *
@@ -24,6 +25,7 @@ public class SimpleJsonLayout extends Layout {
     
     private Level minimumLevelForSlowLogging = Level.ALL;
     private List<String> mdcFieldsToLog = Collections.EMPTY_LIST;
+    private boolean logAllMdc = false;
 
     @Override
     public String format(LoggingEvent le) {
@@ -43,6 +45,10 @@ public class SimpleJsonLayout extends Layout {
         }
         r.put("message", safeToString(le.getMessage()));
         r.put("throwable", formatThrowable(le) );
+        
+        if (logAllMdc) {
+            r.put("MDC", MDC.getContext());
+        }
         
         for (String mdcKey : mdcFieldsToLog) {
             if (!r.containsKey(mdcKey)) {
@@ -156,6 +162,10 @@ public class SimpleJsonLayout extends Layout {
             }
             mdcFieldsToLog = Collections.unmodifiableList(listToLog);
         }
+    }
+    
+    public void setLogAllMdc(boolean flag) {
+        logAllMdc = flag;
     }
     
 }
